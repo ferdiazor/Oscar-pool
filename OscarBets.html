@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Oscar Bets — Apuestas Familiares</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Cormorant+Garamond:wght@300;400;500;600&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07060a;--s1:#100f14;--s2:#181620;--s3:#231f2e;
+  --gold:#c8a951;--gold2:#e8c96a;--gold3:#f5dfa0;--gold4:#fff8e0;
+  --text:#e8e2d0;--text2:#a89878;--text3:#6a5a3a;
+  --red:#8a1c1c;--green:#1c5a2a;
+  --r:10px;
+}
+html,body{min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:'Cormorant Garamond',Georgia,serif;overflow-x:hidden;position:relative}
+
+/* ─── GLOBAL CANVAS BG ─── */
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* ─── PAGE LAYER ─── */
+.page-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:0;transition:opacity 1.2s ease}
+.page-bg.visible{opacity:1}
+
+/* ─── APP ─── */
+.app{position:relative;z-index:10;display:flex;flex-direction:column;min-height:100vh}
+
+/* ─── HEADER ─── */
+.header{
+  background:linear-gradient(180deg,rgba(7,6,10,0.98) 0%,rgba(7,6,10,0.85) 100%);
+  border-bottom:1px solid rgba(200,169,81,0.25);
+  backdrop-filter:blur(12px);
+  padding:0 24px;position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;height:64px
+}
+.header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(200,169,81,.5),rgba(245,223,160,.8),rgba(200,169,81,.5),transparent)
+}
+.logo-wrap{display:flex;align-items:center;gap:14px}
+.logo-oscar{width:36px;height:36px;flex-shrink:0}
+.logo-text{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--gold2);letter-spacing:2px;line-height:1}
+.logo-sub{font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--text3);letter-spacing:4px;text-transform:uppercase}
+.nav{display:flex;gap:2px}
+.nav-btn{
+  background:none;border:1px solid transparent;color:var(--text2);
+  font-family:'Cormorant Garamond',serif;font-size:15px;letter-spacing:1px;
+  padding:7px 18px;border-radius:24px;cursor:pointer;transition:all .25s
+}
+.nav-btn:hover,.nav-btn.active{background:rgba(200,169,81,.1);border-color:rgba(200,169,81,.4);color:var(--gold2)}
+
+/* ─── MAIN ─── */
+.main{flex:1;padding:28px 24px;max-width:1240px;margin:0 auto;width:100%}
+
+/* ─── HERO TITLE ─── */
+.hero{text-align:center;padding:40px 0 32px;position:relative}
+.hero-sup{font-size:12px;letter-spacing:7px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;font-family:'IM Fell English',serif;font-style:italic}
+.hero-title{font-family:'Playfair Display',serif;font-size:54px;font-weight:900;color:var(--gold2);line-height:1;text-shadow:0 0 60px rgba(200,169,81,.3)}
+.hero-ornament{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 10px}
+.hero-line{height:1px;width:120px;background:linear-gradient(90deg,transparent,var(--gold))}
+.hero-line.r{background:linear-gradient(90deg,var(--gold),transparent)}
+.hero-diamond{width:8px;height:8px;background:var(--gold2);transform:rotate(45deg)}
+.hero-sub{color:var(--text2);font-size:17px;max-width:440px;margin:0 auto;font-style:italic;line-height:1.6}
+
+/* ─── PANELS ─── */
+.panel{background:rgba(16,15,20,0.7);backdrop-filter:blur(8px);border:1px solid rgba(200,169,81,0.15);border-radius:12px;padding:22px;position:relative;overflow:hidden}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,81,.4),transparent)}
+.panel-title{font-family:'Playfair Display',serif;font-size:17px;color:var(--gold2);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(200,169,81,.1);display:flex;align-items:center;gap:8px}
+
+/* ─── HOME LAYOUT ─── */
+.home-grid{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
+@media(max-width:860px){.home-grid{grid-template-columns:1fr}}
+
+/* ─── MEMBER LIST ─── */
+.member-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.member-row{
+  display:flex;align-items:center;gap:10px;padding:9px 13px;
+  background:rgba(255,255,255,.03);border-radius:9px;border:1px solid rgba(255,255,255,.06);
+  cursor:pointer;transition:all .2s
+}
+.member-row:hover{background:rgba(200,169,81,.05);border-color:rgba(200,169,81,.2)}
+.member-row.active-row{background:rgba(200,169,81,.08);border-color:rgba(200,169,81,.35)}
+.member-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.member-name{flex:1;font-size:15px}
+.member-remove{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;padding:0 4px;transition:.2s}
+.member-remove:hover{color:#e84a4a}
+.add-row{display:flex;gap:8px}
+.add-input{
+  flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(200,169,81,.2);
+  border-radius:8px;padding:9px 13px;color:var(--text);
+  font-family:'Cormorant Garamond',serif;font-size:15px;outline:none;transition:.2s
+}
+.add-input:focus{border-color:var(--gold);background:rgba(200,169,81,.05)}
+.add-btn{
+  background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a0a;
+  border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:14px;
+  cursor:pointer;font-family:'Cormorant Garamond',serif;transition:.2s;white-space:nowrap;letter-spacing:.5px
+}
+.add-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+
+/* ─── YEAR CARDS ─── */
+.section-heading{font-family:'Playfair Display',serif;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+.years-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:14px}
+.year-card{
+  background:rgba(16,15,20,0.7);backdrop-filter:blur(6px);
+  border:1px solid rgba(200,169,81,.15);border-radius:12px;padding:18px;
+  cursor:pointer;transition:all .25s;position:relative;overflow:hidden
+}
+.year-card .card-glow{
+  position:absolute;top:-40px;right:-40px;width:100px;height:100px;
+  border-radius:50%;opacity:0;transition:.3s;pointer-events:none
+}
+.year-card:hover{border-color:rgba(200,169,81,.5);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.year-card:hover .card-glow{opacity:1}
+.year-num{font-family:'Playfair Display',serif;font-size:34px;font-weight:900;color:var(--gold2);line-height:1}
+.year-edition{font-size:11px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.year-film{font-size:12px;color:var(--gold);margin-top:10px;font-style:italic;line-height:1.4}
+.year-leader{font-size:11px;color:var(--text3);margin-top:6px}
+
+/* ─── BET LAYOUT ─── */
+.bet-layout{display:grid;grid-template-columns:210px 1fr;gap:20px;align-items:start}
+@media(max-width:760px){.bet-layout{grid-template-columns:1fr}}
+.bet-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+
+/* ─── CATEGORY SIDEBAR ─── */
+.cat-sidebar{background:rgba(16,15,20,.8);backdrop-filter:blur(8px);border:1px solid rgba(200,169,81,.15);border-radius:12px;overflow:hidden;position:sticky;top:80px}
+.cat-btn{
+  width:100%;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.04);
+  color:var(--text2);font-family:'Cormorant Garamond',serif;font-size:14px;letter-spacing:.5px;
+  padding:13px 16px;cursor:pointer;text-align:left;transition:.2s;
+  display:flex;align-items:center;justify-content:space-between
+}
+.cat-btn:last-child{border-bottom:none}
+.cat-btn:hover{background:rgba(200,169,81,.06);color:var(--text)}
+.cat-btn.active{background:rgba(200,169,81,.12);color:var(--gold2);border-left:3px solid var(--gold)}
+.cat-check{font-size:11px;color:var(--gold);opacity:0;transition:.2s}
+.cat-btn.picked .cat-check{opacity:1}
+
+/* ─── NOMINEES ─── */
+.nominees-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:13px}
+.nominee-card{
+  background:rgba(16,15,20,.75);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.07);border-radius:10px;
+  overflow:hidden;cursor:pointer;transition:all .22s;position:relative
+}
+.nominee-card:hover{border-color:rgba(200,169,81,.45);transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,0,0,.6)}
+.nominee-card.picked-me{border-color:var(--gold) !important;box-shadow:0 0 20px rgba(200,169,81,.25)}
+.nominee-card.winner-glow{border-color:var(--gold2) !important;box-shadow:0 0 28px rgba(232,201,106,.4)}
+.nom-poster{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:rgba(255,255,255,.03)}
+.nom-fallback{
+  width:100%;aspect-ratio:2/3;
+  background:linear-gradient(160deg,rgba(35,31,46,1) 0%,rgba(16,15,20,1) 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:10px
+}
+.nom-fallback svg{opacity:.35}
+.nom-fallback-title{font-size:12px;color:var(--text2);text-align:center;line-height:1.35;font-family:'Playfair Display',serif;font-style:italic}
+.nom-info{padding:10px}
+.nom-title{font-size:12px;font-weight:500;line-height:1.35;margin-bottom:5px;color:var(--text)}
+.nom-picks{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px}
+.pick-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700}
+.winner-crown{
+  position:absolute;top:7px;right:7px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#0a0a0a;border-radius:50%;width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;font-size:14px
+}
+
+/* ─── CHIPS / TOGGLES ─── */
+.member-chips{display:flex;gap:5px;flex-wrap:wrap}
+.mchip{padding:5px 12px;border-radius:16px;font-size:13px;cursor:pointer;border:2px solid transparent;transition:.2s}
+.mchip.active{border-color:rgba(255,255,255,.8) !important}
+.toggle-btn{
+  background:none;border:1px solid rgba(200,169,81,.25);color:var(--text2);
+  padding:6px 15px;border-radius:20px;cursor:pointer;font-size:13px;
+  font-family:'Cormorant Garamond',serif;transition:.2s;letter-spacing:.5px
+}
+.toggle-btn:hover,.toggle-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(200,169,81,.08)}
+.back-btn{background:none;border:none;color:var(--text2);cursor:pointer;font-size:22px;transition:.2s;padding:0 4px}
+.back-btn:hover{color:var(--gold)}
+
+/* ─── PROGRESS BAR ─── */
+.progress-bar{
+  background:rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.18);
+  border-radius:8px;padding:9px 14px;margin-bottom:16px;
+  display:flex;align-items:center;gap:12px
+}
+.pbar-track{flex:1;background:rgba(255,255,255,.06);border-radius:4px;height:4px;overflow:hidden}
+.pbar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:4px;transition:.5s}
+
+/* ─── LEADERBOARD ─── */
+.lb-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:22px}
+.lb-tab{
+  background:rgba(16,15,20,.7);border:1px solid rgba(200,169,81,.15);
+  border-radius:20px;padding:6px 18px;font-size:13px;cursor:pointer;
+  transition:.2s;font-family:'Cormorant Garamond',serif;color:var(--text2)
+}
+.lb-tab:hover{border-color:var(--gold);color:var(--gold)}
+.lb-tab.active{background:rgba(200,169,81,.12);border-color:var(--gold);color:var(--gold2)}
+.lb-list{display:flex;flex-direction:column;gap:10px}
+.lb-row{
+  background:rgba(16,15,20,.75);backdrop-filter:blur(6px);
+  border:1px solid rgba(200,169,81,.1);border-radius:12px;
+  padding:18px 22px;display:flex;align-items:center;gap:18px;transition:.2s;position:relative;overflow:hidden
+}
+.lb-row::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,81,.2),transparent)}
+.lb-row:hover{border-color:rgba(200,169,81,.25)}
+.lb-rank{font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:var(--text3);width:44px;text-align:center}
+.lb-rank.g1{color:var(--gold2)}
+.lb-rank.g2{color:#b8c4cc}
+.lb-rank.g3{color:#c8844a}
+.lb-avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.lb-name{flex:1;font-family:'Playfair Display',serif;font-size:20px}
+.lb-score{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--gold2);text-align:right}
+.lb-pct{font-size:11px;color:var(--text2);letter-spacing:2px;text-align:right;margin-top:2px}
+.lb-bar-bg{width:90px;background:rgba(255,255,255,.06);border-radius:4px;height:5px;overflow:hidden;margin-top:5px;margin-left:auto}
+.lb-bar-fg{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:4px;transition:.7s}
+.lb-cats{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.lb-pill{font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid;letter-spacing:.5px}
+
+/* ─── EMPTY / TIPS ─── */
+.empty{text-align:center;padding:64px 20px;color:var(--text3)}
+.empty-ico{font-size:52px;margin-bottom:18px;opacity:.35}
+.empty-h{font-family:'Playfair Display',serif;font-size:22px;color:var(--text2);margin-bottom:8px}
+.tip{background:rgba(200,169,81,.05);border:1px solid rgba(200,169,81,.18);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--text2);margin-bottom:14px}
+
+/* ─── YEAR PAGE TRANSITIONS ─── */
+.fade-in{animation:fadeUp .35s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── FILM STRIP DECORATION ─── */
+.filmstrip{display:flex;gap:3px;margin-bottom:20px;overflow:hidden;border-radius:6px;height:44px;position:relative}
+.filmstrip-hole{width:28px;flex-shrink:0;background:rgba(0,0,0,.6);border-radius:3px;display:flex;flex-direction:column;justify-content:space-around;padding:5px 6px;gap:4px}
+.filmstrip-hole span{display:block;background:rgba(200,169,81,.2);border-radius:2px;height:6px}
+.filmstrip-frame{flex:1;background:rgba(200,169,81,.06);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:11px;letter-spacing:2px;color:var(--text3)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:rgba(200,169,81,.3);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- LAYERED BACKGROUND CANVASES -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- PAGE-SPECIFIC BG OVERLAYS -->
+<div class="page-bg" id="bg-home"></div>
+<div class="page-bg" id="bg-bet"></div>
+<div class="page-bg" id="bg-lb"></div>
+
+<div class="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-wrap">
+      <svg class="logo-oscar" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="18" cy="7" rx="6" ry="7" fill="url(#og)"/>
+        <rect x="14" y="13" width="8" height="14" rx="1" fill="url(#og)"/>
+        <rect x="10" y="27" width="16" height="3" rx="1.5" fill="url(#og)"/>
+        <rect x="8" y="30" width="20" height="4" rx="2" fill="url(#og)"/>
+        <defs>
+          <linearGradient id="og" x1="10" y1="0" x2="26" y2="34" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#f5dfa0"/>
+            <stop offset="50%" stop-color="#c8a951"/>
+            <stop offset="100%" stop-color="#a07830"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div>
+        <div class="logo-text">OSCAR BETS</div>
+        <div class="logo-sub">Apuestas Familiares</div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn active" id="nav-home" onclick="showPage('home')">Inicio</button>
+      <button class="nav-btn" id="nav-bet" onclick="showPage('bet')">Apostar</button>
+      <button class="nav-btn" id="nav-lb" onclick="showPage('lb')">Clasificación</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="page-home"></div>
+    <div id="page-bet" style="display:none"></div>
+    <div id="page-lb" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const TMDB = "https://image.tmdb.org/t/p/w300";
+const n = (title, p, winner=false) => ({ title, poster: p ? TMDB+p : null, winner });
+
+const CATS = [
+  { id:"picture",     name:"Mejor Película",        icon:"🎬" },
+  { id:"director",    name:"Mejor Director/a",       icon:"🎥" },
+  { id:"actor",       name:"Mejor Actor",             icon:"🎭" },
+  { id:"actress",     name:"Mejor Actriz",            icon:"🌟" },
+  { id:"supp_actor",  name:"Actor de Reparto",        icon:"🎭" },
+  { id:"supp_actress",name:"Actriz de Reparto",       icon:"✨" },
+  { id:"animated",    name:"Película Animada",        icon:"🎨" },
+  { id:"intl",        name:"Internacional",           icon:"🌍" },
+];
+
+const DB = {
+  2025:{ edition:"97ª", ceremony:"2 Mar 2025", color:"#4a2a6a", categories:{
+    picture:[n("Anora",null,true),n("The Brutalist",null),n("A Complete Unknown",null),n("Conclave",null),n("Dune: Part Two",null),n("Emilia Pérez",null),n("I'm Still Here",null),n("Nickel Boys",null),n("The Substance",null),n("Wicked",null)],
+    director:[n("Brady Corbet · The Brutalist",null,true),n("Coralie Fargeat · The Substance",null),n("James Mangold · A Complete Unknown",null),n("Jacques Audiard · Emilia Pérez",null),n("Sean Baker · Anora",null)],
+    actor:[n("Adrien Brody · The Brutalist",null,true),n("Timothée Chalamet · A Complete Unknown",null),n("Colman Domingo · Sing Sing",null),n("Ralph Fiennes · Conclave",null),n("Sebastian Stan · The Apprentice",null)],
+    actress:[n("Demi Moore · The Substance",null,true),n("Cynthia Erivo · Wicked",null),n("Karla Sofía Gascón · Emilia Pérez",null),n("Mikey Madison · Anora",null),n("Fernanda Torres · I'm Still Here",null)],
+    supp_actor:[n("Kieran Culkin · A Real Pain",null,true),n("Yura Borisov · Anora",null),n("Jeremy Strong · The Apprentice",null),n("Zach Galifianakis · A Real Pain",null),n("Edward Norton · A Complete Unknown",null)],
+    supp_actress:[n("Zoe Saldana · Emilia Pérez",null,true),n("Monica Barbaro · A Complete Unknown",null),n("Ariana Grande · Wicked",null),n("Felicity Jones · The Brutalist",null),n("Isabella Rossellini · Conclave",null)],
+    animated:[n("Flow",null,true),n("Inside Out 2",null),n("Memoir of a Snail",null),n("Wallace & Gromit: Vengeance Most Fowl",null),n("The Wild Robot",null)],
+    intl:[n("I'm Still Here · Brasil",null,true),n("The Girl with the Needle · Dinamarca",null),n("Emilia Pérez · Francia",null),n("The Seed of the Sacred Fig · Alemania",null),n("Flow · Letonia",null)],
+  }},
+  2024:{ edition:"96ª", ceremony:"10 Mar 2024", color:"#2a3a6a", categories:{
+    picture:[n("Oppenheimer","/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",true),n("Anatomy of a Fall",null),n("The Holdovers",null),n("Killers of the Flower Moon","/dB6kruaHh7bMiHFnTDniV37-XOLQ.jpg"),n("Maestro",null),n("American Fiction",null),n("Barbie","/iuFNMS8vlbBHQ2PupJlkM1jkdJE.jpg"),n("Past Lives",null),n("Poor Things","/kCGlIMHnOm8JPXEGCgKaPnGpSsj.jpg"),n("The Zone of Interest",null)],
+    director:[n("Christopher Nolan · Oppenheimer","/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",true),n("Justine Triet · Anatomy of a Fall",null),n("Martin Scorsese · Killers of the Flower Moon",null),n("Yorgos Lanthimos · Poor Things","/kCGlIMHnOm8JPXEGCgKaPnGpSsj.jpg"),n("Jonathan Glazer · The Zone of Interest",null)],
+    actor:[n("Cillian Murphy · Oppenheimer","/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",true),n("Bradley Cooper · Maestro",null),n("Colman Domingo · Rustin",null),n("Paul Giamatti · The Holdovers",null),n("Jeffrey Wright · American Fiction",null)],
+    actress:[n("Emma Stone · Poor Things","/kCGlIMHnOm8JPXEGCgKaPnGpSsj.jpg",true),n("Annette Bening · Nyad",null),n("Lily Gladstone · Killers of the Flower Moon",null),n("Sandra Hüller · Anatomy of a Fall",null),n("Carey Mulligan · Maestro",null)],
+    supp_actor:[n("Robert Downey Jr. · Oppenheimer","/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",true),n("Sterling K. Brown · American Fiction",null),n("Robert De Niro · Killers of the Flower Moon",null),n("Ryan Gosling · Barbie","/iuFNMS8vlbBHQ2PupJlkM1jkdJE.jpg"),n("Mark Ruffalo · Poor Things","/kCGlIMHnOm8JPXEGCgKaPnGpSsj.jpg")],
+    supp_actress:[n("Da'Vine Joy Randolph · The Holdovers",null,true),n("Emily Blunt · Oppenheimer","/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg"),n("Danielle Brooks · The Color Purple",null),n("America Ferrera · Barbie","/iuFNMS8vlbBHQ2PupJlkM1jkdJE.jpg"),n("Jodie Foster · Nyad",null)],
+    animated:[n("The Boy and the Heron",null,true),n("Elemental",null),n("Nimona",null),n("Robot Dreams",null),n("Spider-Man: Across the Spider-Verse",null)],
+    intl:[n("The Zone of Interest · Reino Unido",null,true),n("Io Capitano · Italia",null),n("Perfect Days · Japón",null),n("Society of the Snow · España",null),n("The Teachers' Lounge · Alemania",null)],
+  }},
+  2023:{ edition:"95ª", ceremony:"12 Mar 2023", color:"#1a4a2a", categories:{
+    picture:[n("Everything Everywhere All at Once","/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg",true),n("All Quiet on the Western Front",null),n("Avatar: The Way of Water","/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg"),n("The Banshees of Inisherin",null),n("Elvis","/lP5eKh8WOtDjMBRZBBSGrONauqn.jpg"),n("The Fabelmans",null),n("Tár",null),n("Top Gun: Maverick","/mqsPyyeDCBAghXyjbw4MfNcFyAh.jpg"),n("Triangle of Sadness",null),n("Women Talking",null)],
+    director:[n("Daniel Kwan & Daniel Scheinert · EEAAO","/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg",true),n("Todd Field · Tár",null),n("Ruben Östlund · Triangle of Sadness",null),n("Steven Spielberg · The Fabelmans",null),n("Martin McDonagh · Banshees",null)],
+    actor:[n("Brendan Fraser · The Whale",null,true),n("Austin Butler · Elvis","/lP5eKh8WOtDjMBRZBBSGrONauqn.jpg"),n("Colin Farrell · Banshees",null),n("Paul Mescal · Aftersun",null),n("Bill Nighy · Living",null)],
+    actress:[n("Michelle Yeoh · EEAAO","/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg",true),n("Cate Blanchett · Tár",null),n("Andrea Riseborough · To Leslie",null),n("Ana de Armas · Blonde",null),n("Michelle Williams · The Fabelmans",null)],
+    supp_actor:[n("Ke Huy Quan · EEAAO","/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg",true),n("Brendan Gleeson · Banshees",null),n("Brian Tyree Henry · Causeway",null),n("Judd Hirsch · The Fabelmans",null),n("Barry Keoghan · Banshees",null)],
+    supp_actress:[n("Jamie Lee Curtis · EEAAO","/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg",true),n("Angela Bassett · Black Panther: WF",null),n("Hong Chau · The Whale",null),n("Kerry Condon · Banshees",null),n("Stephanie Hsu · EEAAO",null)],
+    animated:[n("Pinocchio (Guillermo del Toro)",null,true),n("Marcel the Shell with Shoes On",null),n("Puss in Boots: The Last Wish",null),n("The Sea Beast",null),n("Turning Red",null)],
+    intl:[n("All Quiet on the Western Front · Alemania",null,true),n("Argentina, 1985 · Argentina",null),n("Close · Bélgica",null),n("The Quiet Girl · Irlanda",null),n("EO · Polonia",null)],
+  }},
+  2022:{ edition:"94ª", ceremony:"27 Mar 2022", color:"#4a1a1a", categories:{
+    picture:[n("CODA","/BzVjmm8l23rPsijU2vKFnJCGKBm.jpg",true),n("Belfast",null),n("Don't Look Up",null),n("Drive My Car",null),n("Dune","/d5NXSklXo0qyIYkgV94XAgMIckC.jpg"),n("King Richard",null),n("Licorice Pizza",null),n("Nightmare Alley",null),n("The Power of the Dog",null),n("West Side Story",null)],
+    director:[n("Jane Campion · The Power of the Dog",null,true),n("Kenneth Branagh · Belfast",null),n("Ryusuke Hamaguchi · Drive My Car",null),n("Steven Spielberg · West Side Story",null),n("Paul Thomas Anderson · Licorice Pizza",null)],
+    actor:[n("Will Smith · King Richard",null,true),n("Javier Bardem · Being the Ricardos",null),n("Benedict Cumberbatch · The Power of the Dog",null),n("Andrew Garfield · tick, tick...BOOM!",null),n("Denzel Washington · The Tragedy of Macbeth",null)],
+    actress:[n("Jessica Chastain · The Eyes of Tammy Faye",null,true),n("Olivia Colman · The Lost Daughter",null),n("Penélope Cruz · Parallel Mothers",null),n("Nicole Kidman · Being the Ricardos",null),n("Kristen Stewart · Spencer",null)],
+    supp_actor:[n("Troy Kotsur · CODA","/BzVjmm8l23rPsijU2vKFnJCGKBm.jpg",true),n("Jesse Plemons · The Power of the Dog",null),n("J.K. Simmons · Being the Ricardos",null),n("Kodi Smit-McPhee · The Power of the Dog",null),n("Ciarán Hinds · Belfast",null)],
+    supp_actress:[n("Ariana DeBose · West Side Story",null,true),n("Jessie Buckley · The Lost Daughter",null),n("Judi Dench · Belfast",null),n("Kirsten Dunst · The Power of the Dog",null),n("Aunjanue Ellis · King Richard",null)],
+    animated:[n("Encanto",null,true),n("Flee",null),n("Luca",null),n("The Mitchells vs. the Machines",null),n("Raya and the Last Dragon",null)],
+    intl:[n("Drive My Car · Japón",null,true),n("Flee · Dinamarca",null),n("The Good Boss · España",null),n("Lunana · Bután",null),n("The Worst Person in the World · Noruega",null)],
+  }},
+  2021:{ edition:"93ª", ceremony:"25 Abr 2021", color:"#1a3a4a", categories:{
+    picture:[n("Nomadland","/66mNWONxGYBqmZCVOaYCuBLQhMq.jpg",true),n("The Father",null),n("Judas and the Black Messiah",null),n("Mank",null),n("Minari",null),n("Promising Young Woman",null),n("Sound of Metal",null),n("The Trial of the Chicago 7",null)],
+    director:[n("Chloé Zhao · Nomadland","/66mNWONxGYBqmZCVOaYCuBLQhMq.jpg",true),n("David Fincher · Mank",null),n("Lee Isaac Chung · Minari",null),n("Emerald Fennell · Promising Young Woman",null),n("Thomas Vinterberg · Another Round",null)],
+    actor:[n("Anthony Hopkins · The Father",null,true),n("Riz Ahmed · Sound of Metal",null),n("Chadwick Boseman · Ma Rainey's Black Bottom",null),n("Gary Oldman · Mank",null),n("Steven Yeun · Minari",null)],
+    actress:[n("Frances McDormand · Nomadland","/66mNWONxGYBqmZCVOaYCuBLQhMq.jpg",true),n("Viola Davis · Ma Rainey's Black Bottom",null),n("Andra Day · Billie Holiday",null),n("Vanessa Kirby · Pieces of a Woman",null),n("Carey Mulligan · Promising Young Woman",null)],
+    supp_actor:[n("Daniel Kaluuya · Judas and the Black Messiah",null,true),n("Sacha Baron Cohen · The Trial of the Chicago 7",null),n("Leslie Odom Jr. · One Night in Miami",null),n("Paul Raci · Sound of Metal",null),n("LaKeith Stanfield · Judas",null)],
+    supp_actress:[n("Youn Yuh-jung · Minari",null,true),n("Maria Bakalova · Borat 2",null),n("Glenn Close · Hillbilly Elegy",null),n("Olivia Colman · The Father",null),n("Amanda Seyfried · Mank",null)],
+    animated:[n("Soul",null,true),n("Onward",null),n("Over the Moon",null),n("A Shaun the Sheep Movie",null),n("Wolfwalkers",null)],
+    intl:[n("Another Round · Dinamarca",null,true),n("Better Days · Hong Kong",null),n("Collective · Rumanía",null),n("The Man Who Sold His Skin · Túnez",null),n("Quo Vadis, Aida? · Bosnia",null)],
+  }},
+  2020:{ edition:"92ª", ceremony:"9 Feb 2020", color:"#2a1a4a", categories:{
+    picture:[n("Parasite","/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",true),n("Ford v Ferrari",null),n("The Irishman",null),n("Jojo Rabbit",null),n("Joker","/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg"),n("Little Women",null),n("Marriage Story",null),n("1917",null),n("Once Upon a Time in Hollywood","/8j58iEBw9pOXFD2L0nt0ZXeHviB.jpg"),n("The Two Popes",null)],
+    director:[n("Bong Joon-ho · Parasite","/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",true),n("Quentin Tarantino · Once Upon a Time",null),n("Sam Mendes · 1917",null),n("Todd Phillips · Joker","/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg"),n("Martin Scorsese · The Irishman",null)],
+    actor:[n("Joaquin Phoenix · Joker","/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg",true),n("Leonardo DiCaprio · Once Upon a Time","/8j58iEBw9pOXFD2L0nt0ZXeHviB.jpg"),n("Adam Driver · Marriage Story",null),n("Taron Egerton · Rocketman",null),n("Jonathan Pryce · The Two Popes",null)],
+    actress:[n("Renée Zellweger · Judy",null,true),n("Cynthia Erivo · Harriet",null),n("Scarlett Johansson · Marriage Story",null),n("Saoirse Ronan · Little Women",null),n("Charlize Theron · Bombshell",null)],
+    supp_actor:[n("Brad Pitt · Once Upon a Time in Hollywood","/8j58iEBw9pOXFD2L0nt0ZXeHviB.jpg",true),n("Tom Hanks · A Beautiful Day",null),n("Anthony Hopkins · The Two Popes",null),n("Al Pacino · The Irishman",null),n("Joe Pesci · The Irishman",null)],
+    supp_actress:[n("Laura Dern · Marriage Story",null,true),n("Kathy Bates · Richard Jewell",null),n("Scarlett Johansson · Jojo Rabbit",null),n("Florence Pugh · Little Women",null),n("Margot Robbie · Bombshell",null)],
+    animated:[n("Toy Story 4",null,true),n("How to Train Your Dragon 3",null),n("I Lost My Body",null),n("Klaus",null),n("Missing Link",null)],
+    intl:[n("Parasite · Corea del Sur","/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",true),n("Corpus Christi · Polonia",null),n("Honeyland · Macedonia",null),n("Les Misérables · Francia",null),n("Pain and Glory · España",null)],
+  }},
+  2019:{ edition:"91ª", ceremony:"24 Feb 2019", color:"#4a3a1a", categories:{
+    picture:[n("Green Book","/7BsvSuDQuoqhWmU2fL7W2GOcZHU.jpg",true),n("Black Panther","/uxzzxijgPIY7slzFvMotPv8wjKA.jpg"),n("BlacKkKlansman",null),n("Bohemian Rhapsody","/lHu1wtNaczFPGFDTrjCSzeLPTKN.jpg"),n("The Favourite",null),n("Roma","/B2DSzoLiMCiHfMv2vIGBaFbQnV.jpg"),n("A Star Is Born",null),n("Vice",null)],
+    director:[n("Alfonso Cuarón · Roma","/B2DSzoLiMCiHfMv2vIGBaFbQnV.jpg",true),n("Ryan Coogler · Black Panther","/uxzzxijgPIY7slzFvMotPv8wjKA.jpg"),n("Yorgos Lanthimos · The Favourite",null),n("Spike Lee · BlacKkKlansman",null),n("Adam McKay · Vice",null)],
+    actor:[n("Rami Malek · Bohemian Rhapsody","/lHu1wtNaczFPGFDTrjCSzeLPTKN.jpg",true),n("Christian Bale · Vice",null),n("Bradley Cooper · A Star Is Born",null),n("Willem Dafoe · At Eternity's Gate",null),n("Viggo Mortensen · Green Book","/7BsvSuDQuoqhWmU2fL7W2GOcZHU.jpg")],
+    actress:[n("Olivia Colman · The Favourite",null,true),n("Yalitza Aparicio · Roma","/B2DSzoLiMCiHfMv2vIGBaFbQnV.jpg"),n("Glenn Close · The Wife",null),n("Lady Gaga · A Star Is Born",null),n("Melissa McCarthy · Can You Forgive Me?",null)],
+    supp_actor:[n("Mahershala Ali · Green Book","/7BsvSuDQuoqhWmU2fL7W2GOcZHU.jpg",true),n("Adam Driver · BlacKkKlansman",null),n("Sam Elliott · A Star Is Born",null),n("Richard E. Grant · Can You Forgive Me?",null),n("Sam Rockwell · Vice",null)],
+    supp_actress:[n("Regina King · If Beale Street Could Talk",null,true),n("Amy Adams · Vice",null),n("Marina de Tavira · Roma","/B2DSzoLiMCiHfMv2vIGBaFbQnV.jpg"),n("Emma Stone · The Favourite",null),n("Rachel Weisz · The Favourite",null)],
+    animated:[n("Spider-Man: Into the Spider-Verse",null,true),n("Incredibles 2",null),n("Isle of Dogs",null),n("Mirai",null),n("Ralph Breaks the Internet",null)],
+    intl:[n("Roma · México","/B2DSzoLiMCiHfMv2vIGBaFbQnV.jpg",true),n("Capernaum · Líbano",null),n("Cold War · Polonia",null),n("Never Look Away · Alemania",null),n("Shoplifters · Japón",null)],
+  }},
+  2018:{ edition:"90ª", ceremony:"4 Mar 2018", color:"#1a4a3a", categories:{
+    picture:[n("The Shape of Water","/k4FwHlMhuRR5BISY2Gm2QZHlH5Q.jpg",true),n("Call Me by Your Name",null),n("Darkest Hour",null),n("Dunkirk","/ebSnODDg9lbsMIaWg2uAbjn7TO5.jpg"),n("Get Out","/tFXcEccSQMf3lfhfXKSU9iRBpa3.jpg"),n("Lady Bird","/r0CO5iguvahaq7p9p8mLYD4bppR.jpg"),n("Phantom Thread",null),n("The Post",null),n("Three Billboards",null)],
+    director:[n("Guillermo del Toro · The Shape of Water","/k4FwHlMhuRR5BISY2Gm2QZHlH5Q.jpg",true),n("Christopher Nolan · Dunkirk","/ebSnODDg9lbsMIaWg2uAbjn7TO5.jpg"),n("Jordan Peele · Get Out","/tFXcEccSQMf3lfhfXKSU9iRBpa3.jpg"),n("Greta Gerwig · Lady Bird","/r0CO5iguvahaq7p9p8mLYD4bppR.jpg"),n("Paul Thomas Anderson · Phantom Thread",null)],
+    actor:[n("Gary Oldman · Darkest Hour",null,true),n("Timothée Chalamet · Call Me by Your Name",null),n("Daniel Day-Lewis · Phantom Thread",null),n("Daniel Kaluuya · Get Out","/tFXcEccSQMf3lfhfXKSU9iRBpa3.jpg"),n("Denzel Washington · Roman J. Israel, Esq.",null)],
+    actress:[n("Frances McDormand · Three Billboards",null,true),n("Sally Hawkins · The Shape of Water","/k4FwHlMhuRR5BISY2Gm2QZHlH5Q.jpg"),n("Margot Robbie · I, Tonya",null),n("Saoirse Ronan · Lady Bird","/r0CO5iguvahaq7p9p8mLYD4bppR.jpg"),n("Meryl Streep · The Post",null)],
+    supp_actor:[n("Sam Rockwell · Three Billboards",null,true),n("Willem Dafoe · The Florida Project",null),n("Woody Harrelson · Three Billboards",null),n("Richard Jenkins · The Shape of Water","/k4FwHlMhuRR5BISY2Gm2QZHlH5Q.jpg"),n("Christopher Plummer · All the Money",null)],
+    supp_actress:[n("Allison Janney · I, Tonya",null,true),n("Mary J. Blige · Mudbound",null),n("Hong Chau · Downsizing",null),n("Laurie Metcalf · Lady Bird",null),n("Octavia Spencer · The Shape of Water",null)],
+    animated:[n("Coco",null,true),n("The Boss Baby",null),n("The Breadwinner",null),n("Ferdinand",null),n("Loving Vincent",null)],
+    intl:[n("A Fantastic Woman · Chile",null,true),n("The Insult · Líbano",null),n("Loveless · Rusia",null),n("On Body and Soul · Hungría",null),n("The Square · Suecia",null)],
+  }},
+  2017:{ edition:"89ª", ceremony:"26 Feb 2017", color:"#1a2a4a", categories:{
+    picture:[n("Moonlight","/4911T5FbJ9eAlnL98WqfoErCLiz.jpg",true),n("Arrival",null),n("Fences",null),n("Hacksaw Ridge",null),n("Hell or High Water",null),n("Hidden Figures",null),n("La La Land","/uONFHl0mBzABHg4hFP3f4ZFiGlu.jpg"),n("Lion",null),n("Manchester by the Sea",null)],
+    director:[n("Damien Chazelle · La La Land","/uONFHl0mBzABHg4hFP3f4ZFiGlu.jpg",true),n("Denis Villeneuve · Arrival",null),n("Mel Gibson · Hacksaw Ridge",null),n("Kenneth Lonergan · Manchester by the Sea",null),n("Barry Jenkins · Moonlight","/4911T5FbJ9eAlnL98WqfoErCLiz.jpg")],
+    actor:[n("Casey Affleck · Manchester by the Sea",null,true),n("Andrew Garfield · Hacksaw Ridge",null),n("Ryan Gosling · La La Land","/uONFHl0mBzABHg4hFP3f4ZFiGlu.jpg"),n("Viggo Mortensen · Captain Fantastic",null),n("Denzel Washington · Fences",null)],
+    actress:[n("Emma Stone · La La Land","/uONFHl0mBzABHg4hFP3f4ZFiGlu.jpg",true),n("Isabelle Huppert · Elle",null),n("Ruth Negga · Loving",null),n("Natalie Portman · Jackie",null),n("Meryl Streep · Florence Foster Jenkins",null)],
+    supp_actor:[n("Mahershala Ali · Moonlight","/4911T5FbJ9eAlnL98WqfoErCLiz.jpg",true),n("Jeff Bridges · Hell or High Water",null),n("Lucas Hedges · Manchester by the Sea",null),n("Dev Patel · Lion",null),n("Michael Shannon · Nocturnal Animals",null)],
+    supp_actress:[n("Viola Davis · Fences",null,true),n("Naomie Harris · Moonlight","/4911T5FbJ9eAlnL98WqfoErCLiz.jpg"),n("Nicole Kidman · Lion",null),n("Octavia Spencer · Hidden Figures",null),n("Michelle Williams · Manchester by the Sea",null)],
+    animated:[n("Zootopia",null,true),n("Kubo and the Two Strings",null),n("Moana",null),n("My Life as a Zucchini",null),n("The Red Turtle",null)],
+    intl:[n("The Salesman · Irán",null,true),n("Land of Mine · Dinamarca",null),n("A Man Called Ove · Suecia",null),n("Tanna · Australia",null),n("Toni Erdmann · Alemania",null)],
+  }},
+  2016:{ edition:"88ª", ceremony:"28 Feb 2016", color:"#3a1a4a", categories:{
+    picture:[n("Spotlight","/eupozbC0FqkKmfT0GUPR5CaGHsq.jpg",true),n("The Big Short",null),n("Bridge of Spies",null),n("Brooklyn",null),n("Mad Max: Fury Road","/kqjL17yufvn9OVLyXYpvtyrFfak.jpg"),n("The Martian",null),n("The Revenant","/ji3ecJphATlVgF65LogMkiPctQp.jpg"),n("Room",null)],
+    director:[n("Alejandro G. Iñárritu · The Revenant","/ji3ecJphATlVgF65LogMkiPctQp.jpg",true),n("Adam McKay · The Big Short",null),n("George Miller · Mad Max: Fury Road","/kqjL17yufvn9OVLyXYpvtyrFfak.jpg"),n("Lenny Abrahamson · Room",null),n("Tom McCarthy · Spotlight","/eupozbC0FqkKmfT0GUPR5CaGHsq.jpg")],
+    actor:[n("Leonardo DiCaprio · The Revenant","/ji3ecJphATlVgF65LogMkiPctQp.jpg",true),n("Bryan Cranston · Trumbo",null),n("Matt Damon · The Martian",null),n("Michael Fassbender · Steve Jobs",null),n("Eddie Redmayne · The Danish Girl",null)],
+    actress:[n("Brie Larson · Room",null,true),n("Cate Blanchett · Carol",null),n("Jennifer Lawrence · Joy",null),n("Charlotte Rampling · 45 Years",null),n("Saoirse Ronan · Brooklyn",null)],
+    supp_actor:[n("Mark Rylance · Bridge of Spies",null,true),n("Christian Bale · The Big Short",null),n("Tom Hardy · The Revenant","/ji3ecJphATlVgF65LogMkiPctQp.jpg"),n("Mark Ruffalo · Spotlight","/eupozbC0FqkKmfT0GUPR5CaGHsq.jpg"),n("Sylvester Stallone · Creed",null)],
+    supp_actress:[n("Alicia Vikander · The Danish Girl",null,true),n("Jennifer Jason Leigh · The Hateful Eight",null),n("Rooney Mara · Carol",null),n("Rachel McAdams · Spotlight","/eupozbC0FqkKmfT0GUPR5CaGHsq.jpg"),n("Kate Winslet · Steve Jobs",null)],
+    animated:[n("Inside Out","/aAmfIX3TT40zUHGcCKrlOZRKC7u.jpg",true),n("Anomalisa",null),n("Boy and the World",null),n("Shaun the Sheep Movie",null),n("When Marnie Was There",null)],
+    intl:[n("Son of Saul · Hungría",null,true),n("Embrace of the Serpent · Colombia",null),n("Mustang · Francia",null),n("Theeb · Jordania",null),n("A War · Dinamarca",null)],
+  }},
+  2015:{ edition:"87ª", ceremony:"22 Feb 2015", color:"#4a2a1a", categories:{
+    picture:[n("Birdman","/gKiDrDOsKtBz8CMNjFXs2iHiqBx.jpg",true),n("American Sniper",null),n("Boyhood",null),n("The Grand Budapest Hotel","/nX5XotM9yprCKarRH4fzOq1VM9E.jpg"),n("The Imitation Game",null),n("Selma",null),n("The Theory of Everything",null),n("Whiplash","/7fn624j5lj3xTme2SgiLCeuedmO.jpg")],
+    director:[n("Alejandro G. Iñárritu · Birdman","/gKiDrDOsKtBz8CMNjFXs2iHiqBx.jpg",true),n("Richard Linklater · Boyhood",null),n("Wes Anderson · The Grand Budapest Hotel","/nX5XotM9yprCKarRH4fzOq1VM9E.jpg"),n("Morten Tyldum · The Imitation Game",null),n("Bennett Miller · Foxcatcher",null)],
+    actor:[n("Eddie Redmayne · The Theory of Everything",null,true),n("Steve Carell · Foxcatcher",null),n("Bradley Cooper · American Sniper",null),n("Benedict Cumberbatch · The Imitation Game",null),n("Michael Keaton · Birdman","/gKiDrDOsKtBz8CMNjFXs2iHiqBx.jpg")],
+    actress:[n("Julianne Moore · Still Alice",null,true),n("Marion Cotillard · Two Days, One Night",null),n("Felicity Jones · The Theory of Everything",null),n("Rosamund Pike · Gone Girl",null),n("Reese Witherspoon · Wild",null)],
+    supp_actor:[n("J.K. Simmons · Whiplash","/7fn624j5lj3xTme2SgiLCeuedmO.jpg",true),n("Robert Duvall · The Judge",null),n("Ethan Hawke · Boyhood",null),n("Edward Norton · Birdman","/gKiDrDOsKtBz8CMNjFXs2iHiqBx.jpg"),n("Mark Ruffalo · Foxcatcher",null)],
+    supp_actress:[n("Patricia Arquette · Boyhood",null,true),n("Laura Dern · Wild",null),n("Keira Knightley · The Imitation Game",null),n("Emma Stone · Birdman","/gKiDrDOsKtBz8CMNjFXs2iHiqBx.jpg"),n("Meryl Streep · Into the Woods",null)],
+    animated:[n("Big Hero 6",null,true),n("The Boxtrolls",null),n("How to Train Your Dragon 2",null),n("Song of the Sea",null),n("The Tale of Princess Kaguya",null)],
+    intl:[n("Ida · Polonia",null,true),n("Leviathan · Rusia",null),n("Tangerines · Estonia",null),n("Timbuktu · Mauritania",null),n("Wild Tales · Argentina",null)],
+  }},
+};
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const COLORS = ["#e8704a","#4a9ae8","#7ec85f","#e84a7a","#9b5fe8","#e8c94a","#4ae8c8","#e85f9b","#5fa8e8","#c88040"];
+let family=[], picks={}, activeMember=null, betYear=2025, betCat="picture", showWinners=false, lbYear=2025;
+
+// ─── STORAGE ───
+(async()=>{
+  try{
+    const f=await window.storage.get("osc2_fam");
+    const p=await window.storage.get("osc2_picks");
+    if(f) family=JSON.parse(f.value);
+    if(p) picks=JSON.parse(p.value);
+  }catch(e){}
+  renderHome();
+})();
+const saveF=async()=>{ try{ await window.storage.set("osc2_fam",JSON.stringify(family)); }catch(e){} };
+const saveP=async()=>{ try{ await window.storage.set("osc2_picks",JSON.stringify(picks)); }catch(e){} };
+const pk=(y,m,c)=>`${y}|${m}|${c}`;
+
+// ═══════════════════════════════════════════
+// ANIMATED CANVAS BACKGROUND
+// ═══════════════════════════════════════════
+(function initCanvas(){
+  const cv=document.getElementById('bg-canvas');
+  const ctx=cv.getContext('2d');
+  let W,H,stars=[],particles=[];
+  
+  function resize(){
+    W=cv.width=window.innerWidth;
+    H=cv.height=window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize',resize);
+
+  // Generate stars
+  for(let i=0;i<200;i++) stars.push({
+    x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
+    r:Math.random()*1.2+0.2,a:Math.random(),da:(Math.random()-.5)*.008,
+    speed:Math.random()*.15+.05
+  });
+
+  // Gold dust particles
+  for(let i=0;i<40;i++) particles.push({
+    x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight+window.innerHeight,
+    r:Math.random()*2+.5,a:0,speed:Math.random()*0.4+0.2,
+    drift:(Math.random()-.5)*.3
+  });
+
+  let pageColor=[7,6,10];
+  let targetColor=[7,6,10];
+  
+  window.setBgColor=function(hex){
+    const r=parseInt(hex.slice(1,3),16);
+    const g=parseInt(hex.slice(3,5),16);
+    const b=parseInt(hex.slice(5,7),16);
+    targetColor=[r,g,b];
+  };
+
+  let t=0;
+  function draw(){
+    t++;
+    // Lerp bg color
+    pageColor=pageColor.map((v,i)=>v+(targetColor[i]-v)*0.015);
+    const [r,g,b]=pageColor.map(x=>Math.round(x));
+    
+    ctx.clearRect(0,0,W,H);
+    
+    // Background gradient
+    const grad=ctx.createRadialGradient(W*.5,H*.3,0,W*.5,H*.5,Math.max(W,H)*.7);
+    grad.addColorStop(0,`rgba(${r+20},${g+15},${b+30},1)`);
+    grad.addColorStop(.5,`rgba(${r+5},${g+3},${b+8},1)`);
+    grad.addColorStop(1,`rgba(${Math.max(0,r-3)},${Math.max(0,g-3)},${Math.max(0,b-2)},1)`);
+    ctx.fillStyle=grad;
+    ctx.fillRect(0,0,W,H);
+
+    // Film grain overlay
+    if(t%3===0){
+      const grain=ctx.createImageData(W,H);
+      for(let i=0;i<grain.data.length;i+=4){
+        const n=(Math.random()*20)|0;
+        grain.data[i]=grain.data[i+1]=grain.data[i+2]=n;
+        grain.data[i+3]=8;
+      }
+      ctx.putImageData(grain,0,0);
+    }
+
+    // Art deco center radial lines
+    ctx.save();
+    ctx.translate(W*.5,H*.5);
+    for(let i=0;i<24;i++){
+      const angle=(i/24)*Math.PI*2+t*.0005;
+      const len=Math.max(W,H)*.7;
+      const grad2=ctx.createLinearGradient(0,0,Math.cos(angle)*len,Math.sin(angle)*len);
+      grad2.addColorStop(0,`rgba(200,169,81,0.04)`);
+      grad2.addColorStop(.3,`rgba(200,169,81,0.015)`);
+      grad2.addColorStop(1,`rgba(200,169,81,0)`);
+      ctx.strokeStyle=grad2;
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(0,0);
+      ctx.lineTo(Math.cos(angle)*len,Math.sin(angle)*len);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Projector beam from top-left
+    ctx.save();
+    const beamX=W*.12, beamY=-50;
+    const bGrad=ctx.createLinearGradient(beamX,beamY,W*.7,H*.8);
+    bGrad.addColorStop(0,'rgba(200,169,81,0.08)');
+    bGrad.addColorStop(.4,'rgba(200,169,81,0.03)');
+    bGrad.addColorStop(1,'rgba(200,169,81,0)');
+    ctx.fillStyle=bGrad;
+    ctx.beginPath();
+    ctx.moveTo(beamX-20,beamY);
+    ctx.lineTo(beamX+20,beamY);
+    ctx.lineTo(W*.85+Math.sin(t*.005)*20,H+50);
+    ctx.lineTo(W*.2+Math.sin(t*.005)*20,H+50);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Stars
+    stars.forEach(s=>{
+      s.a+=s.da;
+      if(s.a>1||s.a<0) s.da*=-1;
+      s.y-=s.speed;
+      if(s.y<-5){ s.y=H+5; s.x=Math.random()*W; }
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(245,223,160,${s.a*.6+.1})`;
+      ctx.fill();
+    });
+
+    // Gold dust
+    particles.forEach(p=>{
+      p.y-=p.speed;
+      p.x+=p.drift;
+      p.a=Math.min(.7,p.a+.01);
+      if(p.y<-10){ p.y=H+10; p.x=Math.random()*W; p.a=0; }
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(200,169,81,${p.a*.3})`;
+      ctx.fill();
+    });
+
+    // Film strip bottom decoration
+    const fh=40;
+    const fy=H-fh;
+    ctx.fillStyle='rgba(0,0,0,0.4)';
+    ctx.fillRect(0,fy,W,fh);
+    const frames=Math.ceil(W/60)+1;
+    const offset=(t*.5)%60;
+    for(let i=-1;i<frames;i++){
+      const fx=i*60-offset;
+      ctx.fillStyle='rgba(200,169,81,0.06)';
+      ctx.fillRect(fx+5,fy+6,50,28);
+      ctx.fillStyle='rgba(0,0,0,0.6)';
+      ctx.fillRect(fx+8,fy+10,10,20);
+      ctx.fillRect(fx+42,fy+10,10,20);
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+let currentPage='home';
+function showPage(p){
+  currentPage=p;
+  ['home','bet','lb'].forEach(id=>{
+    document.getElementById(`page-${id}`).style.display=id===p?'':'none';
+    document.getElementById(`nav-${id}`).classList.toggle('active',id===p);
+  });
+  if(p==='home'){ window.setBgColor('#07060a'); renderHome(); }
+  if(p==='bet'){
+    const c=DB[betYear]?.color||'#07060a';
+    window.setBgColor(c);
+    renderBet();
+  }
+  if(p==='lb'){ window.setBgColor('#0a0612'); renderLb(); }
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+const initials=n=>n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+const mColor=name=>{ const m=family.find(x=>x.name===name); return m?m.color:'#888'; };
+
+function posterHTML(nom){
+  if(nom.poster){
+    return `<img class="nom-poster" src="${nom.poster}" alt="${nom.title}" loading="lazy"
+      onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+      <div class="nom-fallback" style="display:none">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(200,169,81,.5)" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="m7 2 5 5 5-5M7 22l5-5 5 5"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+        <div class="nom-fallback-title">${nom.title}</div>
+      </div>`;
+  }
+  return `<div class="nom-fallback">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(200,169,81,.4)" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="m7 2 5 5 5-5M7 22l5-5 5 5"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+    <div class="nom-fallback-title">${nom.title}</div>
+  </div>`;
+}
+
+// Film strip ornament
+function filmStrip(year){
+  return `<div class="filmstrip">
+    <div class="filmstrip-hole"><span></span><span></span><span></span></div>
+    <div class="filmstrip-frame">● ${year} ● OSCAR ● BETS ●</div>
+    <div class="filmstrip-hole"><span></span><span></span><span></span></div>
+    <div class="filmstrip-frame">● APUESTAS ● FAMILIARES ●</div>
+    <div class="filmstrip-hole"><span></span><span></span><span></span></div>
+    <div class="filmstrip-frame">● ${DB[year]?.edition||''} CEREMONIA ●</div>
+    <div class="filmstrip-hole"><span></span><span></span><span></span></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+// HOME PAGE
+// ═══════════════════════════════════════════
+function renderHome(){
+  const years=Object.keys(DB).map(Number).sort((a,b)=>b-a);
+  
+  const memberRows=family.length
+    ? family.map(m=>`
+      <div class="member-row${activeMember===m.name?' active-row':''}" onclick="selectMember('${m.name}')">
+        <div class="member-avatar" style="background:${m.color}22;color:${m.color};border:2px solid ${m.color}55">${initials(m.name)}</div>
+        <span class="member-name">${m.name}</span>
+        <button class="member-remove" onclick="event.stopPropagation();removeMember('${m.name}')">×</button>
+      </div>`).join('')
+    : `<p style="color:var(--text3);font-size:14px;text-align:center;padding:14px 0">Añade miembros para empezar</p>`;
+
+  const winnerOf=y=>DB[y].categories.picture.find(x=>x.winner)?.title||'—';
+  const scores=y=>getScores(y);
+
+  const yearCards=years.map(y=>{
+    const sc=scores(y);
+    const leader=sc[0];
+    const c=DB[y].color;
+    return `<div class="year-card" onclick="goToBet(${y})" style="--yc:${c}">
+      <div class="card-glow" style="background:radial-gradient(circle,${c}44,transparent)"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="year-num">${y}</div>
+        <div style="font-size:11px;color:var(--text3);letter-spacing:1px">${DB[y].edition}</div>
+      </div>
+      <div style="width:100%;height:1px;background:linear-gradient(90deg,${c}66,transparent);margin:8px 0"></div>
+      <div class="year-film">🏆 ${winnerOf(y)}</div>
+      <div class="year-leader">${leader&&leader.correct>0?`👑 ${leader.name}: ${leader.correct}/${leader.total} aciertos`:''}</div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3)">📅 ${DB[y].ceremony}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('page-home').innerHTML=`
+  <div class="fade-in">
+    <div class="hero">
+      <div class="hero-sup">Academia de Artes y Ciencias Cinematográficas</div>
+      <h1 class="hero-title">OSCAR BETS</h1>
+      <div class="hero-ornament">
+        <div class="hero-line"></div>
+        <div class="hero-diamond"></div>
+        <div class="hero-line r"></div>
+      </div>
+      <p class="hero-sub">Once años de historia · Apuesta con tu familia quién llevará la estatuilla</p>
+    </div>
+    <div class="home-grid">
+      <div>
+        <div class="panel">
+          <div class="panel-title">👨‍👩‍👧‍👦 Familia</div>
+          <div class="tip">Selecciona un miembro y luego elige el año para apostar</div>
+          <div class="member-list">${memberRows}</div>
+          <div class="add-row">
+            <input class="add-input" id="new-name" placeholder="Nombre del familiar..." maxlength="20"
+              onkeydown="if(event.key==='Enter')addMember()">
+            <button class="add-btn" onclick="addMember()">+ Añadir</button>
+          </div>
+        </div>
+        ${activeMember?`
+        <div class="panel" style="margin-top:16px;border-color:rgba(200,169,81,.3)">
+          <div class="panel-title" style="margin-bottom:0">🎯 Apostando como</div>
+          <div style="display:flex;align-items:center;gap:13px;margin-top:14px">
+            <div class="member-avatar" style="width:46px;height:46px;font-size:17px;background:${mColor(activeMember)}22;color:${mColor(activeMember)};border:2px solid ${mColor(activeMember)}">${initials(activeMember)}</div>
+            <div>
+              <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--gold2)">${activeMember}</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:2px">Selecciona un año →</div>
+            </div>
+          </div>
+        </div>`:''}
+      </div>
+      <div>
+        <div class="section-heading">Selecciona la ceremonia</div>
+        <div class="years-grid">${yearCards}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function selectMember(name){ activeMember=activeMember===name?null:name; renderHome(); }
+function addMember(){
+  const inp=document.getElementById('new-name');
+  const name=inp.value.trim();
+  if(!name||family.some(m=>m.name===name)||family.length>=10) return;
+  family.push({name,color:COLORS[family.length%COLORS.length]});
+  saveF(); inp.value='';
+  if(!activeMember) activeMember=name;
+  renderHome();
+}
+function removeMember(name){
+  family=family.filter(m=>m.name!==name);
+  if(activeMember===name) activeMember=family[0]?.name||null;
+  saveF(); renderHome();
+}
+function goToBet(y){ betYear=y; showPage('bet'); }
+
+// ═══════════════════════════════════════════
+// BET PAGE
+// ═══════════════════════════════════════════
+function renderBet(){
+  const yd=DB[betYear];
+  if(!yd) return;
+  
+  const catSide=CATS.map(c=>{
+    const hasPick=activeMember&&picks[pk(betYear,activeMember,c.id)];
+    return `<button class="cat-btn${betCat===c.id?' active':''}${hasPick?' picked':''}" onclick="selectCat('${c.id}')">
+      <span>${c.icon} ${c.name}</span>
+      <span class="cat-check">✓</span>
+    </button>`;
+  }).join('');
+
+  const chips=family.length
+    ? `<div class="member-chips">${family.map(m=>`
+        <div class="mchip${activeMember===m.name?' active':''}"
+          style="background:${m.color}22;color:${m.color};border-color:${m.color}55"
+          onclick="activeMember='${m.name}';renderBet()">${m.name}</div>`).join('')}
+      </div>`
+    : `<span style="color:var(--text3);font-size:13px">Sin miembros</span>`;
+
+  const nominees=yd.categories[betCat]||[];
+  const nomCards=nominees.map(nom=>{
+    const myPick=activeMember&&picks[pk(betYear,activeMember,betCat)]===nom.title;
+    const pickedBy=family.filter(m=>picks[pk(betYear,m.name,betCat)]===nom.title);
+    const isW=showWinners&&nom.winner;
+    return `<div class="nominee-card${myPick?' picked-me':''}${isW?' winner-glow':''}" onclick="makePick('${nom.title.replace(/'/g,"\\'").replace(/"/g,'\\"')}')">
+      ${posterHTML(nom)}
+      ${isW?'<div class="winner-crown">★</div>':''}
+      <div class="nom-info">
+        <div class="nom-title">${nom.title}</div>
+        ${pickedBy.length?`<div class="nom-picks">${pickedBy.map(m=>`<div class="pick-dot" title="${m.name}" style="background:${m.color}">${initials(m.name)}</div>`).join('')}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const total=CATS.length;
+  const done=CATS.filter(c=>activeMember&&picks[pk(betYear,activeMember,c.id)]).length;
+  const pct=activeMember?Math.round(done/total*100):0;
+
+  document.getElementById('page-bet').innerHTML=`
+  <div class="fade-in">
+    ${filmStrip(betYear)}
+    <div class="bet-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="back-btn" onclick="showPage('home')">←</button>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:26px;color:var(--gold2)">${betYear} · ${yd.edition} Ceremonia</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">📅 ${yd.ceremony}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        ${chips}
+        <button class="toggle-btn${showWinners?' on':''}" onclick="showWinners=!showWinners;renderBet()">
+          ${showWinners?'🙈 Ocultar ganadores':'👁 Revelar ganadores'}
+        </button>
+      </div>
+    </div>
+    ${activeMember?`
+    <div class="progress-bar">
+      <div class="member-avatar" style="width:28px;height:28px;font-size:11px;flex-shrink:0;background:${mColor(activeMember)}22;color:${mColor(activeMember)};border:1.5px solid ${mColor(activeMember)}">${initials(activeMember)}</div>
+      <span style="font-size:13px;color:var(--text2)">Apostando como <strong style="color:var(--gold2)">${activeMember}</strong></span>
+      <div class="pbar-track"><div class="pbar-fill" style="width:${pct}%"></div></div>
+      <span style="font-size:12px;color:var(--text2);flex-shrink:0">${done}/${total}</span>
+    </div>`
+    :`<div class="tip">⬆ Selecciona un miembro de la familia arriba para hacer sus apuestas</div>`}
+    <div class="bet-layout">
+      <div class="cat-sidebar">${catSide}</div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--gold2);margin-bottom:14px">
+          ${CATS.find(c=>c.id===betCat)?.icon} ${CATS.find(c=>c.id===betCat)?.name}
+        </div>
+        <div class="nominees-grid">${nomCards}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function selectCat(id){ betCat=id; renderBet(); }
+function makePick(title){
+  if(!activeMember) return;
+  const key=pk(betYear,activeMember,betCat);
+  if(picks[key]===title) delete picks[key]; else picks[key]=title;
+  saveP(); renderBet();
+}
+
+// ═══════════════════════════════════════════
+// SCORES
+// ═══════════════════════════════════════════
+function getScores(y){
+  const yd=DB[y];
+  if(!yd||!family.length) return [];
+  return family.map(m=>{
+    let correct=0,total=0,details=[];
+    CATS.forEach(c=>{
+      const noms=yd.categories[c.id];
+      if(!noms) return;
+      const winner=noms.find(x=>x.winner);
+      if(!winner) return;
+      total++;
+      const myPick=picks[pk(y,m.name,c.id)];
+      const hit=myPick===winner.title;
+      if(hit) correct++;
+      details.push({cat:c.name,icon:c.icon,hit,pick:myPick||'—',winner:winner.title});
+    });
+    return{...m,correct,total,details,pct:total>0?Math.round(correct/total*100):0};
+  }).sort((a,b)=>b.correct-a.correct);
+}
+
+// ═══════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════
+function renderLb(){
+  const years=Object.keys(DB).map(Number).sort((a,b)=>b-a);
+  const tabs=years.map(y=>`<button class="lb-tab${lbYear===y?' active':''}" onclick="lbYear=${y};renderLb()">${y}</button>`).join('');
+  const scores=getScores(lbYear);
+  const rankCls=i=>i===0?'g1':i===1?'g2':i===2?'g3':'';
+  const rankLabel=i=>i===0?'★':i===1?'✦':i===2?'◆':i+1;
+
+  let rows='';
+  if(!family.length){
+    rows=`<div class="empty"><div class="empty-ico">🏆</div><div class="empty-h">Sin participantes</div><p style="color:var(--text3);font-size:14px">Añade a tu familia en Inicio</p></div>`;
+  } else if(!scores.some(s=>s.total>0&&(s.correct>0||true))){
+    rows=`<div class="empty"><div class="empty-ico">🎬</div><div class="empty-h">Sin apuestas en ${lbYear}</div><p style="color:var(--text3);font-size:14px">Ve a Apostar y selecciona tus nominados</p></div>`;
+  } else {
+    rows=`<div class="lb-list">${scores.map((m,i)=>{
+      const catPills=m.details.map(d=>`
+        <span class="lb-pill" style="border-color:${d.hit?'rgba(100,200,100,.35)':'rgba(180,60,60,.3)'};color:${d.hit?'#8bc88b':'#c87878'};background:${d.hit?'rgba(80,160,80,.06)':'rgba(160,50,50,.04)'}">
+          ${d.icon}${d.hit?'✓':'✗'}
+        </span>`).join('');
+      return `<div class="lb-row" style="border-left:3px solid ${m.color}55">
+        <div class="lb-rank ${rankCls(i)}">${rankLabel(i)}</div>
+        <div class="lb-avatar" style="background:${m.color}22;color:${m.color};border:2px solid ${m.color}55">${initials(m.name)}</div>
+        <div style="flex:1">
+          <div class="lb-name">${m.name}</div>
+          <div class="lb-cats">${catPills}</div>
+        </div>
+        <div>
+          <div class="lb-score">${m.correct}<span style="font-size:14px;color:var(--text2)">/${m.total}</span></div>
+          <div class="lb-pct">${m.pct}% CORRECTO</div>
+          <div class="lb-bar-bg"><div class="lb-bar-fg" style="width:${m.pct}%"></div></div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  document.getElementById('page-lb').innerHTML=`
+  <div class="fade-in">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:12px;letter-spacing:6px;color:var(--gold);text-transform:uppercase;font-family:'IM Fell English',serif;font-style:italic;margin-bottom:8px">Tabla de clasificación</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:36px;font-weight:900;color:var(--gold2)">¿Quién lo adivinó mejor?</h2>
+      <div class="hero-ornament" style="margin-top:12px">
+        <div class="hero-line"></div><div class="hero-diamond"></div><div class="hero-line r"></div>
+      </div>
+    </div>
+    <div class="lb-tabs">${tabs}</div>
+    ${rows}
+  </div>`;
+}
+</script>
+</body>
+</html>
