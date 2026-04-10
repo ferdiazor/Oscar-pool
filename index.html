@@ -2,93 +2,30 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oscars Family Pool | Historial y Apuestas</title>
+    <title>Oscars Family Pool</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            background-color: #0a0a0a; 
-            color: #e5e5e5; 
-            font-family: 'Inter', sans-serif;
-        }
-        h1, h2 { font-family: 'Playfair Display', serif; }
-        .gold-gradient {
-            background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .movie-card {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .movie-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 25px -5px rgba(184, 134, 11, 0.2);
-        }
+        body { background-color: #0a0a0a; color: white; font-family: sans-serif; }
+        .gold { color: #fbbf24; }
     </style>
 </head>
-<body class="min-h-screen pb-20">
-
-    <header class="py-12 text-center border-b border-gray-800 bg-black">
-        <h1 class="text-5xl md:text-7xl font-bold gold-gradient mb-4">OSCARS POOL</h1>
-        <p class="text-gray-400 tracking-[0.2em] uppercase text-sm">Quiniela Familiar • Historial de Ganadores</p>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-6 mt-12">
-        
-        <section class="mb-20 text-center">
-            <h2 class="text-3xl font-bold mb-6 text-white">🏆 Apuestas Temporada 2026</h2>
-            <div class="bg-gray-900 border-2 border-yellow-600/30 p-8 rounded-2xl inline-block max-w-2xl">
-                <p class="text-lg mb-6 text-gray-300">¿Ya tienes a tus favoritos? Haz clic abajo para registrar tus votos en la quiniela familiar de este año.</p>
-                <a href="#" class="bg-yellow-600 hover:bg-yellow-500 text-black font-extrabold py-3 px-10 rounded-full transition-all uppercase tracking-widest">
-                    REGISTRAR MIS VOTOS
-                </a>
-            </div>
-        </section>
-
-        <h2 class="text-2xl font-bold mb-10 border-l-4 border-yellow-600 pl-4">GANADORES ÚLTIMA DÉCADA (BEST PICTURE)</h2>
-        <div id="oscars-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
-            </div>
-    </main>
-
-    <footer class="text-center py-10 text-gray-600 text-sm border-t border-gray-900 mt-20">
-        &copy; 2026 Oscars Family Pool - Datos de Títulos Originales
-    </footer>
-
+<body class="p-10">
+    <h1 class="text-4xl font-bold gold text-center mb-10">OSCARS FAMILY POOL</h1>
+    <div id="grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6"></div>
     <script>
-        // Base de Datos de los últimos 10 años
-        const winnersData = [
-            { year: 2025, title: "Anora", poster: "https://image.tmdb.org/t/p/w500/98YvI09DscC76L7p09Vw6u0F7.jpg" },
-            { year: 2024, title: "Oppenheimer", poster: "https://image.tmdb.org/t/p/w500/8Gxv2Hbsfof1o99uY2p4JpSfsEA.jpg" },
-            { year: 2023, title: "Everything Everywhere All at Once", poster: "https://image.tmdb.org/t/p/w500/r7DuyYJ0Pd3ArGvCj2H9LqaGvYw.jpg" },
-            { year: 2022, title: "CODA", poster: "https://image.tmdb.org/t/p/w500/4Y0Y69298v3vN6Ie7r2R7oGv9Gj.jpg" },
-            { year: 2021, title: "Nomadland", poster: "https://image.tmdb.org/t/p/w500/66190.jpg" },
-            { year: 2020, title: "Gisaengchung (Parasite)", poster: "https://image.tmdb.org/t/p/w500/7iiTT0SaUvAr7S9DGB3oa9YqGvM.jpg" },
-            { year: 2019, title: "Green Book", poster: "https://image.tmdb.org/t/p/w500/78822.jpg" },
-            { year: 2018, title: "The Shape of Water", poster: "https://image.tmdb.org/t/p/w500/77663.jpg" },
-            { year: 2017, title: "Moonlight", poster: "https://image.tmdb.org/t/p/w500/37686.jpg" },
-            { year: 2016, title: "Spotlight", poster: "https://image.tmdb.org/t/p/w500/31346.jpg" }
+        const winners = [
+            { year: 2025, title: "Anora", img: "https://image.tmdb.org/t/p/w500/98YvI09DscC76L7p09Vw6u0F7.jpg" },
+            { year: 2024, title: "Oppenheimer", img: "https://image.tmdb.org/t/p/w500/8Gxv2Hbsfof1o99uY2p4JpSfsEA.jpg" },
+            { year: 2023, title: "Everything Everywhere All at Once", img: "https://image.tmdb.org/t/p/w500/r7DuyYJ0Pd3ArGvCj2H9LqaGvYw.jpg" },
+            { year: 2022, title: "CODA", img: "https://image.tmdb.org/t/p/w500/4Y0Y69298v3vN6Ie7r2R7oGv9Gj.jpg" },
+            { year: 2021, title: "Nomadland", img: "https://image.tmdb.org/t/p/w500/66190.jpg" }
         ];
-
-        const grid = document.getElementById('oscars-grid');
-
-        winnersData.forEach(item => {
-            const card = document.createElement('div');
-            card.className = "movie-card bg-zinc-900 rounded-xl overflow-hidden border border-gray-800 relative group";
-            card.innerHTML = `
-                <div class="relative overflow-hidden">
-                    <img src="${item.poster}" alt="${item.title}" class="w-full h-[350px] object-cover">
-                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4 text-center">
-                        <p class="text-yellow-500 font-bold">Winner: Best Picture</p>
-                    </div>
-                </div>
-                <div class="p-5">
-                    <span class="text-xs font-bold text-yellow-600 tracking-tighter">${item.year}</span>
-                    <h3 class="text-lg font-bold text-white truncate" title="${item.title}">${item.title}</h3>
-                </div>
-            `;
-            grid.appendChild(card);
+        const container = document.getElementById('grid');
+        winners.forEach(m => {
+            container.innerHTML += `<div class="bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800">
+                <img src="${m.img}" class="w-full h-64 object-cover">
+                <div class="p-4"><p class="gold text-sm">${m.year}</p><h3 class="font-bold">${m.title}</h3></div>
+            </div>`;
         });
     </script>
 </body>
-</html>
